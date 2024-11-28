@@ -1,0 +1,133 @@
+# services:
+#   openpne:
+#     # image: openpne/openpne3-env:latest
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     container_name: openpne_container
+#     ports:
+#       - "8080:80"
+#     environment:
+#       - DB_HOST=localhost
+#       - DB_NAME=openpne
+#       - DB_USER=root
+#       - DB_PASSWORD=rootpass
+#       - APACHE_DOCUMENT_ROOT=/var/www/html/web # Set OpenPNE document root
+
+#     volumes:
+#       - C:\HTML\OpenPNE3:/var/www/html  # Mount host OpenPNE3 directory to container
+#     depends_on:
+#       - db
+
+#   db:
+#     image: mysql:8.0
+#     container_name: openpne_db
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: rootpass
+#       MYSQL_DATABASE: openpne
+#       # MYSQL_USER: openpne_user
+#       # MYSQL_PASSWORD: openpne_pass
+#     volumes:
+#       - db_data:/var/lib/mysql
+  
+#   phpmyadmin:
+#     image: phpmyadmin/phpmyadmin          # phpMyAdmin の Docker イメージを使用
+#     container_name: phpmyadmin
+#     environment:
+#       PMA_HOST: localhost                      # phpMyAdmin が接続するデータベースのホスト名を指定
+#       MYSQL_ROOT_PASSWORD: rootpass           # MySQL の root パスワード
+#       environment:
+#       APACHE_SERVER_NAME: localhost
+#     ports:
+#       - "8081:80"                         # ホストの 8081 番ポートを phpMyAdmin の 80 番ポートにマッピング
+#     depends_on:
+#       - db
+
+# volumes:
+#   db_data:
+
+
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+     - DB_HOST=db
+    #  - DB_NAME=openpne
+     - DB_NAME=asdb
+     - DB_USER=root
+    #  - DB_PASSWORD=rootpass
+     - DB_PASSWORD=Takuya1113;
+
+     - APACHE_DOCUMENT_ROOT=/var/www/html/web # Set OpenPNE document root
+    depends_on:
+      - db
+    volumes:
+      - C:\HTML\OpenPNE3:/var/www/html
+      - ./custom-apache2.conf:/etc/apache2/apache2.conf
+      - ./000-default.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ./php.ini:/usr/local/etc/php/php-development.ini
+      - ./php.ini:/usr/local/etc/php/php-production.ini
+      - ./ports.conf:/etc/apache2/ports.conf
+      # - ./mpm_prefork.conf:/etc/apache2/mods-available/mpm_prefork.conf
+    # リソース割り当て
+    deploy:
+      resources:
+        limits:
+          memory: "16g"  # 最大16GBのメモリ制限
+          cpus: "4"    # 4 CPUを使用可能に制限
+
+  db:
+    image: mysql:8.0
+    environment:
+      # MYSQL_ROOT_PASSWORD: rootpass  # ここで root のパスワードを指定
+      MYSQL_ROOT_PASSWORD: Takuya1113;  # ここで root のパスワードを指定
+      # MYSQL_DATABASE: openpne        # 初期化するデータベース名
+      MYSQL_DATABASE: asdb        # 初期化するデータベース名
+      # MYSQL_USER: root
+      # # # MYSQL_PASSWORD: rootpass
+      # MYSQL_PASSWORD: Takuya1113;
+    command: --max-connections=10000
+    ports:
+      - "3307:3306"
+    volumes:
+      - data_volume:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d  # SQLファイルをマウント
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin          # phpMyAdmin の Docker イメージを使用
+    container_name: phpmyadmin_debian_prometheus
+    environment:
+      PMA_HOST: db                        # phpMyAdmin が接続するデータベースのホスト名を指定
+      # MYSQL_ROOT_PASSWORD: rootpass           # MySQL の root パスワード
+      MYSQL_ROOT_PASSWORD: Takuya1113;
+    ports:
+      - "8081:80"                         # ホストの 8081 番ポートを phpMyAdmin の 80 番ポートにマッピング
+    depends_on:
+      - db
+  
+  # cadvisor:
+  #   image: google/cadvisor:latest  # cAdvisor のイメージ
+  #   container_name: cadvisor
+  #   ports:
+  #     - "8082:8080"  # cAdvisor のポート
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:rw
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker/:/var/lib/docker:ro
+
+  # prometheus:
+  #   image: prom/prometheus  # Prometheus のイメージ
+  #   container_name: prometheus
+  #   ports:
+  #     - "9090:9090"  # Prometheus のポート
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml  # Prometheus 設定ファイルをマウント
+      
+volumes:
+  data_volume:

@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 1s  # 1秒ごとにメトリクスを収集
+
+scrape_configs:
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8082']  # cAdvisor コンテナのポートを指定
